@@ -1,8 +1,6 @@
 # Tasks
 
 ## Backlog
-- [ ] Add stream reader that accepts hex text input as optional mode.
-- [ ] Add configurable max payload from CLI flag.
 - [ ] Add packet-type-specific decode validation (strict payload lengths).
 - [ ] Add CSV flush interval and buffered writing option.
 - [ ] Add GitHub Actions workflow for build + tests.
@@ -17,4 +15,6 @@
 ## Done (Week 1 Start)
 - [x] Define base packet format with checksum rule.
 - [x] Add sample binary stream generator script.
+- [x] Add stream reader that accepts hex text input as optional mode.
+- [x] Add configurable max payload from CLI flag.
 - [x] Add initial documentation plan.

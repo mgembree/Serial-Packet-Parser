@@ -4,8 +4,9 @@
 
 namespace spp {
 
-PacketParser::PacketParser()
-    : state_(State::WaitStart),
+PacketParser::PacketParser(std::size_t maxPayload)
+        : maxPayload_(maxPayload),
+            state_(State::WaitStart),
       type_byte_(0),
       length_(0) {}
 
@@ -44,7 +45,8 @@ ParseOutcome PacketParser::consume(std::uint8_t byte) {
         frame_bytes_.push_back(byte);
         payload_.clear();
 
-        if (length_ > kMaxPayloadLength) {
+        // Drop frames claiming an unreasonably large payload.
+        if (length_ > maxPayload_) {
             stats_.dropped_packets++;
             resetFrame();
             return {ParseEvent::Dropped, std::nullopt};

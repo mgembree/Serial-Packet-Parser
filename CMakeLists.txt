@@ -12,6 +12,7 @@ add_library(spp_core
     src/parser.cpp
     src/decoder.cpp
     src/logger.cpp
+    src/hex_input.cpp
 )
 
 target_include_directories(spp_core

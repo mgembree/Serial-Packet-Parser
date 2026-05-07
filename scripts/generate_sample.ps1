@@ -35,12 +35,25 @@ function New-Packet {
     return $frame.ToArray()
 }
 
+function Add-Bytes {
+    param(
+        [System.Collections.Generic.List[byte]] $Target,
+        [byte[]] $Bytes
+    )
+
+    foreach ($value in $Bytes) {
+        $Target.Add($value)
+    }
+}
+
 $stream = New-Object System.Collections.Generic.List[byte]
-$stream.AddRange((New-Packet -Type 0x01 -Payload ([byte[]]@(0xE1,0x09))))    # 25.29 C
-$stream.AddRange((New-Packet -Type 0x02 -Payload ([byte[]]@(0x88,0x13))))    # 5.000 V
-$stream.AddRange((New-Packet -Type 0x03 -Payload ([byte[]]@(0x05))))         # status flags
-$stream.AddRange((New-Packet -Type 0x01 -Payload ([byte[]]@(0x10,0x27)) -CorruptChecksum))
-$stream.AddRange([byte[]]@(0x00,0x12,0x34,0xAA))                              # noise + truncated start
+Add-Bytes -Target $stream -Bytes (New-Packet -Type 0x01 -Payload ([byte[]]@(0xE1,0x09)))    # 25.29 C
+Add-Bytes -Target $stream -Bytes (New-Packet -Type 0x02 -Payload ([byte[]]@(0x88,0x13)))    # 5.000 V
+Add-Bytes -Target $stream -Bytes (New-Packet -Type 0x03 -Payload ([byte[]]@(0x05)))         # status flags
+Add-Bytes -Target $stream -Bytes (New-Packet -Type 0x01 -Payload ([byte[]]@(0x10,0x27)) -CorruptChecksum)
+Add-Bytes -Target $stream -Bytes ([byte[]]@(0x00,0x12,0x34,0xAA))                              # noise + truncated start
 
 [System.IO.File]::WriteAllBytes("data/sample_stream.bin", $stream.ToArray())
+($stream | ForEach-Object { $_.ToString("X2") }) -join " " | Set-Content -Path "data/sample_stream.hex" -NoNewline
 Write-Host "Wrote data/sample_stream.bin with $($stream.Count) bytes"
+Write-Host "Wrote data/sample_stream.hex with $($stream.Count) byte values"

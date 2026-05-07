@@ -3,7 +3,6 @@
 #include <iomanip>
 
 namespace spp {
-
 CsvLogger::CsvLogger(const std::string& outputPath)
     : out_(outputPath, std::ios::out | std::ios::trunc) {
     if (out_.is_open()) {

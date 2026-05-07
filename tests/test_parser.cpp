@@ -1,8 +1,10 @@
 #include <cassert>
 #include <cstdint>
+#include <sstream>
 #include <vector>
 
 #include "spp/checksum.hpp"
+#include "spp/hex_input.hpp"
 #include "spp/parser.hpp"
 
 namespace {
@@ -76,6 +78,51 @@ void testOversizedDrop() {
     assert(parser.stats().dropped_packets == 1);
 }
 
+void testCustomMaxPayloadDrop() {
+    spp::PacketParser parser(1);
+    const auto bytes = makePacket(0x01, {0x34, 0x12});
+
+    bool sawDrop = false;
+    for (std::uint8_t b : bytes) {
+        const auto outcome = parser.consume(b);
+        if (outcome.event == spp::ParseEvent::Dropped) {
+            sawDrop = true;
+        }
+    }
+
+    assert(sawDrop);
+    assert(parser.stats().dropped_packets == 1);
+    assert(parser.stats().valid_packets == 0);
+}
+
+void testParseHexStream() {
+    std::istringstream input("AA 01 02 34 12 F3\n");
+    std::vector<std::uint8_t> bytes;
+
+    const bool ok = spp::parseHexStream(input, bytes);
+
+    assert(ok);
+    assert((bytes == std::vector<std::uint8_t>{0xAA, 0x01, 0x02, 0x34, 0x12, 0xF3}));
+}
+
+void testParseHexStreamRejectsOddDigits() {
+    std::istringstream input("AA 1");
+    std::vector<std::uint8_t> bytes;
+
+    const bool ok = spp::parseHexStream(input, bytes);
+
+    assert(!ok);
+}
+
+void testParseHexStreamRejectsInvalidChar() {
+    std::istringstream input("AA GG");
+    std::vector<std::uint8_t> bytes;
+
+    const bool ok = spp::parseHexStream(input, bytes);
+
+    assert(!ok);
+}
+
 }  // namespace
 
 int main() {
@@ -83,5 +130,9 @@ int main() {
     testValidPacket();
     testChecksumFailure();
     testOversizedDrop();
+    testCustomMaxPayloadDrop();
+    testParseHexStream();
+    testParseHexStreamRejectsOddDigits();
+    testParseHexStreamRejectsInvalidChar();
     return 0;
 }

@@ -21,7 +21,7 @@ struct ParseOutcome {
 
 class PacketParser {
 public:
-    PacketParser();
+    PacketParser(std::size_t maxPayload = kMaxPayloadLength);
 
     ParseOutcome consume(std::uint8_t byte);
     const ParserStats& stats() const;
@@ -36,7 +36,7 @@ private:
     };
 
     void resetFrame();
-
+    std::size_t maxPayload_;
     State state_;
     ParserStats stats_;
     std::uint8_t type_byte_;
