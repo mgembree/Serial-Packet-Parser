@@ -1,2 +1,105 @@
 # Serial Packet Parser
-C++ Serial Packet Parser & Logger
+
+C++17 serial packet parser and CSV logger for UART-style telemetry streams.
+
+## Project Goals
+- Read a byte stream from file or stdin.
+- Detect packet boundaries using start byte, length, payload, checksum.
+- Reject malformed packets and checksum failures.
+- Decode temperature, voltage, and status packets.
+- Log decoded rows to CSV with UTC timestamps.
+- Print parser health counters after each run.
+
+## Packet Format
+- Byte 0: start byte `0xAA`
+- Byte 1: packet type
+- Byte 2: payload length `len`
+- Bytes 3..(3+len-1): payload bytes
+- Final byte: checksum = sum of all previous frame bytes mod 256
+
+## Packet Types
+- `0x01` temperature: 2-byte little-endian unsigned value, scale `raw / 100.0` in C
+- `0x02` voltage: 2-byte little-endian unsigned value, scale `raw / 1000.0` in V
+- `0x03` status: 1-byte bit flags
+
+## Repository Structure
+```
+.
+|-- CMakeLists.txt
+|-- README.md
+|-- .gitignore
+|-- include/
+|   `-- spp/
+|       |-- checksum.hpp
+|       |-- decoder.hpp
+|       |-- logger.hpp
+|       |-- packet.hpp
+|       `-- parser.hpp
+|-- src/
+|   |-- checksum.cpp
+|   |-- decoder.cpp
+|   |-- logger.cpp
+|   |-- main.cpp
+|   `-- parser.cpp
+|-- tests/
+|   `-- test_parser.cpp
+|-- scripts/
+|   `-- generate_sample.ps1
+`-- docs/
+		|-- tasks.md
+		`-- week_plan.md
+```
+
+## Build
+```powershell
+cmake -S . -B build
+cmake --build build
+```
+
+## Run
+Generate sample data:
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\generate_sample.ps1
+```
+
+Parse from file:
+```powershell
+.\build\serial_packet_parser.exe --input .\data\sample_stream.bin --output .\output.csv
+```
+
+Parse from stdin (example):
+```powershell
+Get-Content .\data\sample_stream.bin -AsByteStream | .\build\serial_packet_parser.exe --input - --output .\output.csv
+```
+
+## Test
+```powershell
+ctest --test-dir build --output-on-failure
+```
+
+## Parser Stats Example
+```
+Parser stats
+	bytes processed: 25
+	total packets:   4
+	valid packets:   3
+	dropped packets: 0
+	checksum fails:  1
+```
+
+## 7-Day Plan
+- Day 1: CMake + CLI skeleton
+- Day 2: Packet format + checksum
+- Day 3: State-machine parser
+- Day 4: Decoder + CSV logger
+- Day 5: Stats + robustness
+- Day 6: Tests and boundaries
+- Day 7: README polish + demo snippet
+
+See `docs/week_plan.md` and `docs/tasks.md` for detailed weekly execution.
+
+## Resume Bullets
+- Built a C++17 binary packet parser using a finite-state machine to decode UART-style telemetry frames with checksum validation.
+- Implemented robust error handling for malformed and truncated packets, with runtime counters for drop and failure diagnostics.
+- Developed a CSV logging pipeline for decoded telemetry and produced reproducible CLI-based test inputs for protocol verification.
+- Added unit tests for checksum and parser edge cases, improving reliability and regression confidence.
