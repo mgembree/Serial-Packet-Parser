@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "spp/checksum.hpp"
+#include "spp/decoder.hpp"   // TODO: needed for validatePacket and decodePacket tests
 #include "spp/hex_input.hpp"
 #include "spp/parser.hpp"
 
@@ -123,6 +124,33 @@ void testParseHexStreamRejectsInvalidChar() {
     assert(!ok);
 }
 
+void testValidatePacketRejectsWrongLength() {
+    spp::Packet packet;
+    packet.type = spp::PacketType::Temperature;
+    packet.payload = {0x34};
+    assert(!spp::validatePacket(packet));
+    auto decoded = spp::decodePacket(packet);
+    assert(!decoded.temperature_c.has_value());
+}
+
+void testValidatePacketAcceptsCorrectLength() {
+    spp::Packet packet;
+    packet.type = spp::PacketType::Temperature;
+    packet.payload = {0x34, 0x12};
+    assert(spp::validatePacket(packet));
+    auto decoded = spp::decodePacket(packet);
+    assert(decoded.temperature_c.has_value());
+}
+
+void testValidatePacketRejectsUnknownType() {
+    spp::Packet packet;
+    packet.type = spp::PacketType::Unknown;
+    packet.payload = {0x34, 0x12};
+    assert(!spp::validatePacket(packet));
+    auto decoded = spp::decodePacket(packet);
+    assert(!decoded.temperature_c.has_value());
+}
+
 }  // namespace
 
 int main() {
@@ -134,5 +162,8 @@ int main() {
     testParseHexStream();
     testParseHexStreamRejectsOddDigits();
     testParseHexStreamRejectsInvalidChar();
+    testValidatePacketAcceptsCorrectLength();
+    testValidatePacketRejectsUnknownType();
+    testValidatePacketRejectsWrongLength();
     return 0;
 }

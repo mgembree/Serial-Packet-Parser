@@ -28,13 +28,15 @@ struct CliOptions {
     std::string outputPath = "parsed.csv";
     InputFormat inputFormat = InputFormat::Binary;
     std::size_t maxPayload = 64;
+    std::size_t csvFlushInterval = 10; // rows between flushes
 };
 
 void printUsage(const char* exeName) {
     std::cout << "Usage: " << exeName
-              << " [--input <path|->] [--output <csv_path>] [--input-format <binary|hex>] [--max-payload <number>]\n";
+              << " [--input <path|->] [--output <csv_path>] [--input-format <binary|hex>] [--max-payload <number>] [--csv-flush-interval <rows>]\n";
 }
-// Parse command lines
+
+// Parse CLI
 bool parseArgs(int argc, char* argv[], CliOptions& options) {
     for (int i = 1; i < argc; ++i) {
         const std::string arg = argv[i];
@@ -67,6 +69,15 @@ bool parseArgs(int argc, char* argv[], CliOptions& options) {
             }
             try {
                 options.maxPayload = std::stoul(argv[++i]);
+            } catch (const std::exception&) {
+                return false;
+            }
+        } else if (arg == "--csv-flush-interval") {
+            if (i + 1 >= argc) {
+                return false;
+            }
+            try {
+                options.csvFlushInterval = std::stoul(argv[++i]);
             } catch (const std::exception&) {
                 return false;
             }
@@ -144,7 +155,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    spp::CsvLogger logger(options.outputPath);
+    spp::CsvLogger logger(options.outputPath, options.csvFlushInterval);
     if (!logger.isOpen()) {
         std::cerr << "Failed to open output CSV: " << options.outputPath << '\n';
         return 1;
@@ -176,6 +187,12 @@ int main(int argc, char* argv[]) {
         std::cerr << "Failed to parse hex input stream. Use hexadecimal byte pairs separated by whitespace or newlines.\n";
     }
 
+    // Ensure all rows are written before printing stats.
+    try{
+        logger.flush();
+    } catch (const std::exception& e) {
+        std::cerr << "Failed to flush CSV logger: " << e.what() << '\n';
+    }
     printStats(parser.stats());
 
     return ok ? 0 : 1;

@@ -28,9 +28,13 @@ DecodedPacket decodePacket(const Packet& packet) {
     decoded.type = packet.type;
     decoded.payload_hex = payloadToHex(packet.payload);
 
+    if (!validatePacket(packet)) {
+        return decoded;
+    }
+
     switch (packet.type) {
     case PacketType::Temperature:
-        if (packet.payload.size() >= 2) {
+        if (packet.payload.size() == 2) {
             const std::uint16_t raw =
                 static_cast<std::uint16_t>(packet.payload[0]) |
                 (static_cast<std::uint16_t>(packet.payload[1]) << 8);
@@ -39,7 +43,7 @@ DecodedPacket decodePacket(const Packet& packet) {
         break;
 
     case PacketType::Voltage:
-        if (packet.payload.size() >= 2) {
+        if (packet.payload.size() == 2) {
             const std::uint16_t raw =
                 static_cast<std::uint16_t>(packet.payload[0]) |
                 (static_cast<std::uint16_t>(packet.payload[1]) << 8);
@@ -48,7 +52,7 @@ DecodedPacket decodePacket(const Packet& packet) {
         break;
 
     case PacketType::Status:
-        if (!packet.payload.empty()) {
+        if (packet.payload.size() == 1) {
             decoded.status_flags = packet.payload[0];
         }
         break;
@@ -58,6 +62,19 @@ DecodedPacket decodePacket(const Packet& packet) {
     }
 
     return decoded;
+}
+
+bool validatePacket(const Packet& packet) {
+    switch (packet.type) {
+    case PacketType::Temperature:
+        return packet.payload.size() == 2;
+    case PacketType::Voltage:
+        return packet.payload.size() == 2;
+    case PacketType::Status:
+        return packet.payload.size() == 1;
+    default:
+        return false;
+    }
 }
 
 }  // namespace spp

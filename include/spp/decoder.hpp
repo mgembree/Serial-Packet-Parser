@@ -4,6 +4,7 @@
 
 namespace spp {
 
+bool validatePacket(const Packet& packet);
 DecodedPacket decodePacket(const Packet& packet);
 
 }  // namespace spp
