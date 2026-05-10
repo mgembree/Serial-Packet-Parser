@@ -5,3 +5,9 @@ build/
 *.pdb
 *.ilk
 *.csv
+
+# Guard against accidentally committing locally extracted CMake distributions.
+cmake-*/
+**/cmake-*/
+CMake-*/
+**/CMake-*/

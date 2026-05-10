@@ -1,5 +1,7 @@
 # Serial Packet Parser
 
+<!-- TODO(next): add GitHub Actions CI badge below once workflow name/status URL is finalized. -->
+
 C++17 serial packet parser and CSV logger for UART-style telemetry streams.
 
 ## Project Goals
@@ -95,6 +97,7 @@ Get-Content .\data\sample_stream.hex | .\build\serial_packet_parser.exe --input 
 ```
 
 ## Test
+<!-- TODO(next): add a short integration-test note describing spp_cli_integration_run + spp_cli_integration_verify and expected CSV assertions. -->
 ```powershell
 ctest --test-dir build --output-on-failure
 ```

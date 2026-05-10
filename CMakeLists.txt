@@ -35,4 +35,36 @@ if(BUILD_TESTS)
     add_executable(spp_tests tests/test_parser.cpp)
     target_link_libraries(spp_tests PRIVATE spp_core)
     add_test(NAME spp_tests COMMAND spp_tests)
+
+    # Use a config-specific output path for multi-config generators (VS/Xcode).
+    set(SPP_INTEGRATION_CSV_DIR "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>")
+    set(SPP_INTEGRATION_CSV "${SPP_INTEGRATION_CSV_DIR}/spp_integration_output.csv")
+    add_test(
+        NAME spp_cli_integration_run
+        COMMAND serial_packet_parser
+            --input "${CMAKE_CURRENT_SOURCE_DIR}/data/sample_stream.bin"
+            --output "${SPP_INTEGRATION_CSV}"
+            --input-format binary
+            --csv-flush-interval 1
+    )
+    set_tests_properties(
+        spp_cli_integration_run
+        PROPERTIES
+            WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+            FIXTURES_SETUP spp_cli_csv
+    )
+
+    add_test(
+        NAME spp_cli_integration_verify
+        COMMAND ${CMAKE_COMMAND}
+            -DCSV_PATH=${SPP_INTEGRATION_CSV}
+            -DBINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/verify_integration_csv.cmake
+    )
+    set_tests_properties(
+        spp_cli_integration_verify
+        PROPERTIES
+            WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+            FIXTURES_REQUIRED spp_cli_csv
+    )
 endif()
